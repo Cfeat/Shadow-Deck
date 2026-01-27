@@ -25,14 +25,15 @@
     下载本项目中的所有文件：
     *   `index.html`
     *   `index.tsx`
-    *   `style.css`
+    *   `style.css`等
 
 2.  **启动本地服务器**：
     由于使用了 ES Modules (`import/export`)，你需要通过本地服务器来访问 `index.html`。
 
-    *   **VS Code (推荐)**：安装 "Live Server" 扩展，右键点击 `index.html` 并选择 "Open with Live Server"。
+    *   **Node.js(推荐)**：运行 `npm install` 和 `npm run dev`。
+    *   **VS Code**：安装 "Live Server" 扩展，右键点击 `index.html` 并选择 "Open with Live Server"。
     *   **Python**：在当前目录下打开终端，运行 `python -m http.server 8000`，然后在浏览器访问 `http://localhost:8000`。
-    *   **Node.js**：运行 `npx serve`。
+   
 
 ## 🎮 游戏指南
 
@@ -47,9 +48,3 @@
     *   **技能牌 (Skill)**：如“防御”，可以提供护甲（格挡值）。**注意：护甲在回合结束时会清零！**
     *   观察敌人头顶的 **意图 (Intent)** 图标，预判它是要攻击、防御还是施加状态，从而制定你的策略。
 4.  **胜利条件**：将敌人生命值降至 0。如果你生命值归零，游戏结束。
-
-## 🛠️ 技术栈
-
-*   **React 18**: UI 组件库。
-*   **Tailwind CSS**: 原子化 CSS 框架，用于快速样式开发。
-*   **Lucide React**: 现代化的图标库。
