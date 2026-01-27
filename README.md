@@ -2,7 +2,12 @@
 
 **Shadow Deck** 是一款受 *Slay the Spire (杀戮尖塔)* 启发的 Roguelike 卡牌构建游戏。它完全在浏览器中运行，使用 React 和 Tailwind CSS 构建。
 
-![Shadow Deck 预览](https://via.placeholder.com/800x400?text=Shadow+Deck+Gameplay+Preview)
+<img width="1860" height="915" alt="image" src="https://github.com/user-attachments/assets/4ceca870-3f27-48a3-b64c-0a79bb11d4b3" />
+
+<img width="1860" height="915" alt="image" src="https://github.com/user-attachments/assets/ae513806-8d7e-488c-a818-b492382a5a7b" />
+
+<img width="1860" height="915" alt="image" src="https://github.com/user-attachments/assets/a34e0a21-4563-4c47-9eb4-72066d0aec0a" />
+
 
 ## ✨ 游戏特性
 
