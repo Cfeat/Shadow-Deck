@@ -4,7 +4,7 @@ body {
     font-family: 'Inter', sans-serif;
     background-color: #020617;
     color: #e2e8f0;
-    overflow: hidden;
+    overflow-x: hidden;
     user-select: none;
 }
 
@@ -20,7 +20,12 @@ body {
     text-shadow: 2px 2px 4px rgba(0,0,0,1);
 }
 
-/* Animations */
+.text-shadow-sm {
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.6);
+}
+
+/* ===== Combat Animations ===== */
+
 @keyframes float-up {
     0% { opacity: 0; transform: translateY(10px); }
     10% { opacity: 1; transform: translateY(0); }
@@ -73,7 +78,44 @@ body {
     animation: spin-slow 8s linear infinite;
 }
 
-/* Scrollbar */
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 5px rgba(239,68,68,0.3); }
+    50% { box-shadow: 0 0 20px rgba(239,68,68,0.6); }
+}
+.animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+}
+
+/* ===== Card Hover Effects ===== */
+
+.card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+    transform: translateY(-12px) scale(1.08);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.1);
+}
+
+/* ===== Enemy Intent Animation ===== */
+
+.enemy-intent {
+    animation: intent-pulse 1.5s ease-in-out infinite;
+}
+@keyframes intent-pulse {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.05); }
+}
+
+/* ===== Scrollbar ===== */
+
 ::-webkit-scrollbar {
     width: 6px;
 }
@@ -83,4 +125,26 @@ body {
 ::-webkit-scrollbar-thumb {
     background: #334155;
     border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* ===== Shop & UI Polish ===== */
+
+.shop-item {
+    transition: all 0.2s ease;
+}
+.shop-item:hover {
+    border-color: #eab308;
+    background: rgba(234, 179, 8, 0.05);
+}
+
+/* ===== Button Effects ===== */
+
+button:active:not(:disabled) {
+    transform: scale(0.95);
+}
+button:disabled {
+    cursor: not-allowed;
 }
