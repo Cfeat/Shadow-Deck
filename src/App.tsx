@@ -122,6 +122,7 @@ const App: React.FC = () => {
 
   // Timers
   const battleTimers = useRef<NodeJS.Timeout[]>([]);
+  const nodeSelectionLockedRef = useRef(false);
   const scoreSubmittedRef = useRef(false);
   const playerRef = useRef(player);
   const enemyRef = useRef(enemy);
@@ -145,6 +146,9 @@ const App: React.FC = () => {
 
   // Cleanup
   useEffect(() => () => clearBattleTimers(), []);
+  useEffect(() => {
+    if (phase === "MAP") nodeSelectionLockedRef.current = false;
+  }, [phase]);
 
   const clearBattleTimers = () => {
     battleTimers.current.forEach(t => clearTimeout(t));
@@ -346,6 +350,9 @@ const App: React.FC = () => {
 
   // --- Battle Setup ---
   const handleNodeSelect = (node: TowerNode) => {
+    if (nodeSelectionLockedRef.current || phase !== "MAP") return;
+    nodeSelectionLockedRef.current = true;
+
     // Mark node reached
     setTowerFloors(prev => prev.map(floor =>
       floor.map(n => n.id === node.id ? { ...n, reached: true } : n)
