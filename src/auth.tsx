@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, UserPlus, LogIn } from "lucide-react";
 import { register, login } from "./api";
+import { useT } from "./i18n";
 
 interface AuthModalProps {
   onClose: () => void;
@@ -8,6 +9,7 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
+  const { t } = useT();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +26,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
       const data = await fn(username, password);
       onAuth(data.user.username);
     } catch (err: any) {
-      setError(err.message || "Authentication failed");
+      setError(err.message || t("auth.failed"));
     } finally {
       setLoading(false);
     }
@@ -41,16 +43,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
         </button>
 
         <h2 className="text-3xl font-fantasy text-center mb-2 text-slate-100">
-          {mode === "login" ? "Welcome Back" : "New Adventurer"}
+          {t(mode === "login" ? "menu.welcome" : "menu.newAdventurer")}
         </h2>
         <p className="text-center text-slate-500 text-sm mb-8">
-          {mode === "login" ? "Sign in to continue" : "Create an account to start"}
+          {t(mode === "login" ? "menu.signInDesc" : "menu.registerDesc")}
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
-            placeholder="Username"
+            placeholder={t("menu.username")}
             value={username}
             onChange={e => setUsername(e.target.value)}
             className="bg-slate-800 border border-slate-600 rounded px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-red-500 focus:outline-none transition-colors"
@@ -60,7 +62,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
           />
           <input
             type="password"
-            placeholder="Password"
+            placeholder={t("menu.password")}
             value={password}
             onChange={e => setPassword(e.target.value)}
             className="bg-slate-800 border border-slate-600 rounded px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-red-500 focus:outline-none transition-colors"
@@ -82,9 +84,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
             {loading ? (
               <span className="animate-pulse">...</span>
             ) : mode === "login" ? (
-              <><LogIn size={18} /> Sign In</>
+              <><LogIn size={18} /> {t("auth.signIn")}</>
             ) : (
-              <><UserPlus size={18} /> Register</>
+              <><UserPlus size={18} /> {t("auth.register")}</>
             )}
           </button>
         </form>
@@ -94,7 +96,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
             onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}
             className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
           >
-            {mode === "login" ? "No account? Register here" : "Already have an account? Sign in"}
+            {t(mode === "login" ? "menu.noAccount" : "menu.hasAccount")}
           </button>
         </div>
       </div>

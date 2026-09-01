@@ -12,7 +12,7 @@ export const CardComponent: React.FC<{
   playable: boolean;
   small?: boolean;
 }> = memo(({ card, onClick, disabled, playable, small }) => {
-  const { tCard } = useT();
+  const { t, tCard } = useT();
   const cardInfo = tCard(card.id);
   const getBorderColor = () => {
     if (card.upgraded) return "border-green-400 shadow-green-500/50";
@@ -71,10 +71,10 @@ export const CardComponent: React.FC<{
 
       {/* Footer */}
       <div className="mt-1 flex justify-between items-center text-[9px] text-slate-500 uppercase font-bold">
-        <span>{card.type}</span>
+        <span>{t(`cardTypes.${card.type.toLowerCase()}`)}</span>
         <div className="flex gap-1">
-          {card.exhaust && <span className="text-slate-400">Exhaust</span>}
-          {card.upgraded && <span className="text-green-400">Upgraded</span>}
+          {card.exhaust && <span className="text-slate-400">{t("cardTypes.exhaust")}</span>}
+          {card.upgraded && <span className="text-green-400">{t("cardTypes.upgraded")}</span>}
         </div>
       </div>
     </div>

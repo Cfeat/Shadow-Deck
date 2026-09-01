@@ -26,8 +26,63 @@ import { useT } from "./i18n";
 
 // ============ App ============
 
+const DeckViewer: React.FC<{ deck: Card[]; onClose: () => void }> = ({ deck, onClose }) => {
+  const { t, tCard } = useT();
+  const colors: Record<CardType, string> = {
+    ATTACK: "text-red-400",
+    SKILL: "text-blue-400",
+    POWER: "text-purple-400",
+  };
+
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+      <div className="relative max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-5 shadow-2xl md:p-8">
+        <button onClick={onClose} className="absolute right-4 top-4 text-slate-500 transition-colors hover:text-white" aria-label={t("map.closeDeck")}>
+          <span className="text-2xl">✕</span>
+        </button>
+        <h2 className="mb-2 text-center font-fantasy text-3xl text-slate-100">{t("map.viewDeck")}</h2>
+        <p className="mb-6 text-center text-sm text-slate-500">{deck.length} {t("map.cards")}</p>
+        <div className="grid grid-cols-1 gap-3">
+          {(["ATTACK", "SKILL", "POWER"] as CardType[]).map(type => {
+            const typeCards = deck.filter(card => card.type === type);
+            if (typeCards.length === 0) return null;
+            return (
+              <div key={type}>
+                <h3 className={`mb-2 text-sm font-bold uppercase tracking-widest ${colors[type]}`}>
+                  {t(`cardTypes.${type.toLowerCase()}`)} ({typeCards.length})
+                </h3>
+                {typeCards.map((card, index) => {
+                  const translated = tCard(card.id);
+                  return (
+                    <div key={card.instanceId || `${card.id}-${index}`} className="mb-2 flex flex-col gap-2 rounded border border-slate-700 bg-slate-800 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={`font-bold ${card.upgraded ? "text-green-400" : "text-slate-200"}`}>
+                          {translated.name}{card.upgraded ? "+" : ""}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1 text-xs text-slate-400 sm:items-end">
+                        <span>{t("cardTypes.cost")}: {card.cost === -1 ? "X" : card.cost}</span>
+                        <span className="text-slate-500">{translated.desc}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-6 text-center">
+          <button onClick={onClose} className="rounded border border-slate-600 bg-slate-800 px-6 py-2 font-fantasy tracking-wider text-slate-400 transition-colors hover:bg-slate-700 hover:text-white">
+            {t("map.closeDeck")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
-  const { t, lang, setLang } = useT();
+  const { t, tCard, tPotion, tRelic, lang, setLang } = useT();
 
   // --- Game State ---
   const [towerFloors, setTowerFloors] = useState<TowerNode[][]>([]);
@@ -1047,19 +1102,13 @@ const App: React.FC = () => {
 
   // --- Events ---
   const triggerEvent = () => {
+    const ev = EVENT_POOL[Math.floor(Math.random() * EVENT_POOL.length)];
     setPhase("EVENT");
-    setIsLoadingEvent(true);
-    setCurrentEvent(null);
-    // Select event, but don't auto-apply for choice-based ones
-    setTimeout(() => {
-      const ev = EVENT_POOL[Math.floor(Math.random() * EVENT_POOL.length)];
-      setCurrentEvent(ev);
-      setIsLoadingEvent(false);
-      // Auto-apply only for non-choice events
-      if (!ev.choices) {
-        applyEventEffect(ev.effectType, ev.value);
-      }
-    }, 1000);
+    setIsLoadingEvent(false);
+    setCurrentEvent(ev);
+    if (!ev.choices) {
+      applyEventEffect(ev.effectType, ev.value);
+    }
   };
 
   const applyEventEffect = (effectType: string, value: number) => {
@@ -1477,11 +1526,13 @@ const App: React.FC = () => {
           <SaveLoadModal mode={saveMode} onClose={() => setShowSaveLoad(false)}
             onLoad={restoreGameState} getCurrentState={serializeGameState} />
         )}
+        {showDeck && <DeckViewer deck={deck} onClose={() => setShowDeck(false)} />}
       </div>
     );
   }
 
   if (phase === "EVENT") {
+    const eventIndex = currentEvent ? EVENT_POOL.indexOf(currentEvent) : -1;
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-100 bg-black/80 backdrop-blur-md p-8">
         <FloatingTexts texts={floatingTexts} />
@@ -1501,10 +1552,10 @@ const App: React.FC = () => {
               {currentEvent.effectType === "GOLD" && <span className="text-4xl">💰</span>}
             </div>
             <h2 className="text-4xl font-fantasy mb-6 text-purple-200">
-              {t(`events.${EVENT_POOL.indexOf(currentEvent)}.title`)}
+              {t(`events.${eventIndex}.title`)}
             </h2>
             <p className="text-xl text-slate-300 leading-relaxed mb-8 font-serif italic">
-              "{t(`events.${EVENT_POOL.indexOf(currentEvent)}.desc`)}"
+              "{t(`events.${eventIndex}.desc`)}"
             </p>
             {/* Choice-based events */}
             {currentEvent.choices ? (
@@ -1512,25 +1563,25 @@ const App: React.FC = () => {
                 {currentEvent.choices.map((choice, i) => (
                   <button key={i} onClick={() => handleEventChoice(choice)}
                     className="px-6 py-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-purple-400 rounded transition-all text-left group">
-                    <div className="font-fantasy text-lg text-purple-200 group-hover:text-purple-100">{choice.text}</div>
-                    <div className="text-sm text-slate-400 mt-1">{choice.description}</div>
+                    <div className="font-fantasy text-lg text-purple-200 group-hover:text-purple-100">{t(`eventChoices.${eventIndex}.${i}.title`)}</div>
+                    <div className="text-sm text-slate-400 mt-1">{t(`eventChoices.${eventIndex}.${i}.desc`)}</div>
                   </button>
                 ))}
               </div>
             ) : (
               <>
                 <div className="mb-8 font-bold text-lg">
-                  {currentEvent.effectType === "HEAL" && <span className="text-green-400">Restored {currentEvent.value} HP</span>}
-                  {currentEvent.effectType === "DAMAGE" && <span className="text-red-400">Took {currentEvent.value} Damage</span>}
+                  {currentEvent.effectType === "HEAL" && <span className="text-green-400">{t("event.restoredHp", String(currentEvent.value))}</span>}
+                  {currentEvent.effectType === "DAMAGE" && <span className="text-red-400">{t("event.tookDamage", String(currentEvent.value))}</span>}
                   {currentEvent.effectType === "GOLD" && (
                     <span className={currentEvent.value > 0 ? "text-yellow-400" : "text-red-400"}>
-                      {currentEvent.value > 0 ? "Gained" : "Lost"} {Math.abs(currentEvent.value)} Gold
+                      {t(currentEvent.value > 0 ? "event.gainedGold" : "event.lostGold", String(Math.abs(currentEvent.value)))}
                     </span>
                   )}
                 </div>
                 <button onClick={handleEventContinue}
                   className="px-12 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-purple-400 rounded transition-all font-fantasy tracking-widest text-lg group">
-                  <span className="group-hover:text-purple-200 transition-colors">{currentEvent.buttonText}</span>
+                  <span className="group-hover:text-purple-200 transition-colors">{t(`eventButtons.${eventIndex}`)}</span>
                 </button>
               </>
             )}
@@ -1584,11 +1635,12 @@ const App: React.FC = () => {
                 <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
                   {upgradable.slice(0, 6).map((card, i) => {
                     const realIdx = deck.indexOf(card);
+                    const cardInfo = tCard(card.id);
                     return (
                       <button key={i} onClick={() => doUpgrade(realIdx)}
                         className="text-left px-3 py-2 bg-slate-800 rounded hover:bg-slate-700 border border-slate-700 hover:border-yellow-500 transition-all text-xs text-slate-300 flex justify-between items-center">
-                        <span>{card.name} <span className="text-slate-500">({card.type})</span></span>
-                        <span className="text-green-400">→ {upgradeCardData(card).name}</span>
+                        <span>{cardInfo.name} <span className="text-slate-500">({t(`cardTypes.${card.type.toLowerCase()}`)})</span></span>
+                        <span className="text-green-400">→ {cardInfo.name}+</span>
                       </button>
                     );
                   })}
@@ -1611,7 +1663,7 @@ const App: React.FC = () => {
     if (!shopState) {
       return (
         <div className="flex items-center justify-center h-full text-slate-100 bg-black/80">
-          <div className="animate-pulse text-slate-500 text-xl">Loading shop...</div>
+          <div className="animate-pulse text-slate-500 text-xl">{t("shop.loading")}</div>
         </div>
       );
     }
@@ -1654,8 +1706,8 @@ const App: React.FC = () => {
               {shopPotions.map((potion, i) => (
                 <div key={i} className="flex flex-col items-center gap-2 bg-slate-800 p-4 rounded-lg border border-slate-700">
                   <div className="text-3xl">{potion.emoji}</div>
-                  <div className="font-bold text-sm text-slate-200">{potion.name}</div>
-                  <div className="text-xs text-slate-400">{potion.description}</div>
+                  <div className="font-bold text-sm text-slate-200">{tPotion(potion.id).name}</div>
+                  <div className="text-xs text-slate-400">{tPotion(potion.id).desc}</div>
                   <button onClick={() => buyPotion(potion, potionPrices[i])}
                     className="px-4 py-1.5 bg-purple-900/50 border border-purple-700 hover:bg-purple-800 rounded text-purple-400 text-sm font-bold transition-colors">
                     ${potionPrices[i]}
@@ -1671,8 +1723,8 @@ const App: React.FC = () => {
             <div className="flex justify-center">
               <div className="flex flex-col items-center gap-2 bg-slate-800 p-4 rounded-lg border border-yellow-800/50 w-48">
                 <div className="text-3xl">{shopRelic.emoji}</div>
-                <div className="font-bold text-sm text-yellow-200">{shopRelic.name}</div>
-                <div className="text-xs text-slate-400 text-center">{shopRelic.description}</div>
+                <div className="font-bold text-sm text-yellow-200">{tRelic(shopRelic.id).name}</div>
+                <div className="text-xs text-slate-400 text-center">{tRelic(shopRelic.id).desc}</div>
                 <button onClick={() => buyRelic(shopRelic, relicPrice)}
                   className="px-4 py-1.5 bg-yellow-900/50 border border-yellow-700 hover:bg-yellow-800 rounded text-yellow-400 text-sm font-bold transition-colors">
                   ${relicPrice}
@@ -1688,11 +1740,11 @@ const App: React.FC = () => {
               {deck.slice(0, 8).map((card, i) => (
                 <button key={i} onClick={() => removeCard(i, 75)}
                   className="px-3 py-2 bg-slate-800 border border-slate-700 hover:border-red-500 rounded text-sm text-slate-400 hover:text-red-300 transition-colors flex items-center gap-2">
-                  <span>{card.name}</span>
+                  <span>{tCard(card.id).name}</span>
                   <span className="text-red-600">✕</span>
                 </button>
               ))}
-              {deck.length > 8 && <span className="text-slate-600 text-sm self-center">+{deck.length - 8} more...</span>}
+              {deck.length > 8 && <span className="text-slate-600 text-sm self-center">{t("shop.moreCards", String(deck.length - 8))}</span>}
             </div>
           </div>
 
@@ -1706,53 +1758,6 @@ const App: React.FC = () => {
       </div>
     );
   }
-
-  {/* --- Deck Viewer Modal --- */}
-  {showDeck && (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-700 rounded-lg p-8 w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl relative">
-        <button onClick={() => setShowDeck(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
-          <span className="text-2xl">✕</span>
-        </button>
-        <h2 className="text-3xl font-fantasy text-center mb-2 text-slate-100">{t("map.viewDeck")}</h2>
-        <p className="text-center text-slate-500 text-sm mb-6">{deck.length} {t("map.cards")}</p>
-        <div className="grid grid-cols-1 gap-3">
-          {/* Group by type */}
-          {(["ATTACK", "SKILL", "POWER"] as CardType[]).map(type => {
-            const typeCards = deck.filter(c => c.type === type);
-            if (typeCards.length === 0) return null;
-            const colors: Record<string, string> = { ATTACK: "text-red-400", SKILL: "text-blue-400", POWER: "text-purple-400" };
-            return (
-              <div key={type}>
-                <h3 className={`text-sm font-bold ${colors[type]} mb-2 uppercase tracking-widest`}>
-                  {type} ({typeCards.length})
-                </h3>
-                {typeCards.map((card, i) => (
-                  <div key={i} className="flex items-center justify-between bg-slate-800 border border-slate-700 rounded px-4 py-2 text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className={`font-bold ${card.upgraded ? "text-green-400" : "text-slate-200"}`}>
-                        {card.name}
-                      </span>
-                      {card.upgraded && <span className="text-green-500 text-xs">+</span>}
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-slate-400">
-                      <span>Cost: {card.cost === -1 ? "X" : card.cost}</span>
-                      <span className="text-slate-500">{card.description}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-6 text-center">
-          <button onClick={() => setShowDeck(false)} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded font-fantasy tracking-wider text-slate-400 hover:text-white transition-colors">
-            {t("map.closeDeck")}
-          </button>
-        </div>
-      </div>
-    </div>
-  )}
 
   // --- Battle Scene ---
   return (

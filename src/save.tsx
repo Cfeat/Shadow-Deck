@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Save, Download, Trash2, Clock } from "lucide-react";
 import { listSaves, getSave, putSave, deleteSave, SaveSlotMeta } from "./api";
 import type { SaveGameState } from "./types";
+import { useT } from "./i18n";
 
 interface SaveLoadModalProps {
   mode: "save" | "load";
@@ -13,6 +14,7 @@ interface SaveLoadModalProps {
 const SLOT_NAMES = ["Slot I", "Slot II", "Slot III"];
 
 const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, getCurrentState }) => {
+  const { t } = useT();
   const [slots, setSlots] = useState<(SaveSlotMeta | null)[]>([null, null, null]);
   const [loading, setLoading] = useState(true);
   const [actionMsg, setActionMsg] = useState("");
@@ -40,11 +42,11 @@ const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, ge
     try {
       const state = getCurrentState();
       await putSave(slot, state, state.floor, state.player.currentHp, state.player.gold);
-      setActionMsg(`Saved to ${SLOT_NAMES[slot]}!`);
+      setActionMsg(t("save.saved", SLOT_NAMES[slot]));
       await loadSlots();
       setTimeout(() => setActionMsg(""), 2000);
     } catch (err: any) {
-      setActionMsg(`Save failed: ${err.message}`);
+      setActionMsg(t("save.saveFailed", err.message));
     }
   };
 
@@ -54,7 +56,7 @@ const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, ge
       onLoad(data.gameState as SaveGameState);
       onClose();
     } catch (err: any) {
-      setActionMsg(`Load failed: ${err.message}`);
+      setActionMsg(t("save.loadFailed", err.message));
     }
   };
 
@@ -62,11 +64,11 @@ const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, ge
     try {
       await deleteSave(slot);
       setConfirmDelete(null);
-      setActionMsg(`Save slot ${slot + 1} deleted.`);
+      setActionMsg(t("save.deleted", String(slot + 1)));
       await loadSlots();
       setTimeout(() => setActionMsg(""), 2000);
     } catch (err: any) {
-      setActionMsg(`Delete failed: ${err.message}`);
+      setActionMsg(t("save.deleteFailed", err.message));
     }
   };
 
@@ -81,10 +83,10 @@ const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, ge
         </button>
 
         <h2 className="text-3xl font-fantasy text-center mb-2 text-slate-100">
-          {mode === "save" ? "Save Game" : "Load Game"}
+          {t(mode === "save" ? "save.title" : "save.loadTitle")}
         </h2>
         <p className="text-center text-slate-500 text-sm mb-8">
-          {mode === "save" ? "Choose a slot to save your progress" : "Choose a save to continue"}
+          {t(mode === "save" ? "save.saveDesc" : "save.loadDesc")}
         </p>
 
         {actionMsg && (
@@ -94,7 +96,7 @@ const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, ge
         )}
 
         {loading ? (
-          <div className="text-center text-slate-500 py-8 animate-pulse">Loading saves...</div>
+          <div className="text-center text-slate-500 py-8 animate-pulse">{t("save.loading")}</div>
         ) : (
           <div className="flex flex-col gap-4">
             {[0, 1, 2].map((slot) => {
@@ -108,7 +110,7 @@ const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, ge
                     <div className="font-fantasy text-lg text-slate-200">{SLOT_NAMES[slot]}</div>
                     {save ? (
                       <div className="text-sm text-slate-400 flex items-center gap-3 mt-1">
-                        <span>Floor {save.floor}</span>
+                        <span>{t("map.floor")} {save.floor}</span>
                         <span>❤️ {save.hp}</span>
                         <span className="text-yellow-500">${save.gold}</span>
                         <span className="flex items-center gap-1 text-slate-500">
@@ -116,7 +118,7 @@ const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, ge
                         </span>
                       </div>
                     ) : (
-                      <div className="text-sm text-slate-600 italic">Empty</div>
+                      <div className="text-sm text-slate-600 italic">{t("save.empty")}</div>
                     )}
                   </div>
 
@@ -147,13 +149,13 @@ const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, ge
                               onClick={() => handleDelete(slot)}
                               className="px-2 py-1 bg-red-900 border border-red-700 rounded text-red-300 text-xs font-bold transition-colors"
                             >
-                              Confirm
+                              {t("save.confirm")}
                             </button>
                             <button
                               onClick={() => setConfirmDelete(null)}
                               className="px-2 py-1 bg-slate-700 border border-slate-600 rounded text-slate-300 text-xs transition-colors"
                             >
-                              Cancel
+                              {t("save.cancel")}
                             </button>
                           </div>
                         ) : (
@@ -179,7 +181,7 @@ const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ mode, onClose, onLoad, ge
             onClick={onClose}
             className="px-6 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded font-fantasy tracking-wider text-slate-400 hover:text-white transition-colors"
           >
-            Close
+            {t("map.closeDeck")}
           </button>
         </div>
       </div>
