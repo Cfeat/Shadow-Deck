@@ -149,6 +149,7 @@ export interface SaveGameState {
   battleState?: BattleState;
   enemy?: Enemy | null;
   turn?: number;
+  isPlayerTurn?: boolean;
   barricadeActive?: boolean;
   omegaCount?: number;
   demonFormStrength?: number;

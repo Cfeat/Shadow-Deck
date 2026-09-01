@@ -1,26 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Save, Download, Trash2, Clock } from "lucide-react";
 import { listSaves, getSave, putSave, deleteSave, SaveSlotMeta } from "./api";
-import type { GamePhase, Card, Player, Relic, Potion, BattleState, Enemy } from "./types";
-
-export interface SaveGameState {
-  phase: GamePhase;
-  floor: number;
-  player: Player;
-  deck: Card[];
-  relics: Relic[];
-  potions: Potion[];
-  battleState?: BattleState;
-  enemy?: Enemy | null;
-  turn?: number;
-  barricadeActive?: boolean;
-  omegaCount?: number;
-  demonFormStrength?: number;
-  ruptureActive?: boolean;
-  nextAttackDouble?: boolean;
-  towerFloors?: any[][];
-  currentNodeId?: string;
-}
+import type { SaveGameState } from "./types";
 
 interface SaveLoadModalProps {
   mode: "save" | "load";

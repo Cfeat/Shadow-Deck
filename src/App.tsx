@@ -19,7 +19,7 @@ import {
 } from "./data";
 import AuthModal from "./auth";
 import SaveLoadModal from "./save";
-import { setToken, getToken, verifyToken, getLeaderboard, submitScore, LeaderboardEntry } from "./api";
+import { setToken, getToken, verifyToken, getLeaderboard, submitScore, putSave, LeaderboardEntry } from "./api";
 import { generateTower, TowerNode, findNode, getAccessibleNodes, NodeType } from "./mapGen";
 import TowerMap from "./TowerMap";
 import { useT } from "./i18n";
@@ -185,7 +185,7 @@ const App: React.FC = () => {
   // ── Save / Load ──
 
   const serializeGameState = useCallback((): SaveGameState => ({
-    phase: "MAP",
+    phase,
     floor,
     player: playerRef.current,
     deck,
@@ -197,13 +197,14 @@ const App: React.FC = () => {
       battleState,
       enemy: enemyRef.current,
       turn,
+      isPlayerTurn,
       barricadeActive,
       omegaCount,
       demonFormStrength,
       ruptureActive,
       nextAttackDouble,
     } : {}),
-  }), [phase, floor, deck, relics, potions, towerFloors, currentNodeId, battleState, turn, barricadeActive, omegaCount, demonFormStrength, ruptureActive, nextAttackDouble]);
+  }), [phase, floor, deck, relics, potions, towerFloors, currentNodeId, battleState, turn, isPlayerTurn, barricadeActive, omegaCount, demonFormStrength, ruptureActive, nextAttackDouble]);
 
   const restoreGameState = useCallback((state: SaveGameState) => {
     clearBattleTimers();
@@ -227,7 +228,7 @@ const App: React.FC = () => {
       setBattleState(state.battleState);
       if (state.enemy) setEnemy(state.enemy);
       setPhase("BATTLE");
-      setIsPlayerTurn(true);
+      setIsPlayerTurn(state.isPlayerTurn ?? true);
     } else {
       setBattleState({ draw: [], hand: [], discard: [], exhaust: [] });
       setEnemy(null);
@@ -240,7 +241,6 @@ const App: React.FC = () => {
   const doSave = useCallback(async (slot: number) => {
     if (!username) return;
     try {
-      const { putSave } = await import("./api");
       const state = serializeGameState();
       await putSave(slot, state, state.floor, state.player.currentHp, state.player.gold);
       setSaveMessage(`Saved! (Slot ${slot + 1})`);
@@ -254,7 +254,6 @@ const App: React.FC = () => {
   const doAutoSave = useCallback(async () => {
     if (!username) return;
     try {
-      const { putSave } = await import("./api");
       const state = serializeGameState();
       await putSave(0, state, state.floor, state.player.currentHp, state.player.gold);
     } catch {
@@ -315,19 +314,19 @@ const App: React.FC = () => {
         handleShop();
         break;
       case "TREASURE":
-        handleTreasure();
+        handleTreasure(node.id);
         break;
     }
   };
 
-  const handleTreasure = () => {
+  const handleTreasure = (nodeId: string) => {
     const relic = pickRandom(RELIC_POOL, 1)[0];
     setRelics(prev => [...prev, relic]);
     addFloatingText(`+ ${relic.name}`, 50, 50, "text-yellow-400", "text-xl");
     log(`Found ${relic.name}!`);
     // Mark complete and go back to map
     setTowerFloors(prev => prev.map(floor =>
-      floor.map(n => n.id === currentNodeId ? { ...n, completed: true } : n)
+      floor.map(n => n.id === nodeId ? { ...n, completed: true } : n)
     ));
     setPhase("MAP");
   };
@@ -406,8 +405,6 @@ const App: React.FC = () => {
   const victoryTriggeredRef = useRef(false);
   useEffect(() => {
     if (phase === "BATTLE" && enemy && enemy.currentHp <= 0 && !victoryTriggeredRef.current) {
-      victoryTriggeredRef.current = true;
-      clearBattleTimers();
       handleVictory();
     }
     if (phase !== "BATTLE") {
@@ -963,6 +960,8 @@ const App: React.FC = () => {
 
   // --- Victory ---
   const handleVictory = () => {
+    if (victoryTriggeredRef.current) return;
+    victoryTriggeredRef.current = true;
     clearBattleTimers();
     const isFinal = floor === FINAL_BOSS_FLOOR;
     setTurn(0);
@@ -1863,7 +1862,7 @@ const App: React.FC = () => {
 
         {/* End Turn Button */}
         <button onClick={endTurn} disabled={!isPlayerTurn}
-          className={`absolute right-36 bottom-10 px-8 py-3 font-bold uppercase tracking-widest rounded shadow-[0_0_15px_rgba(220,38,38,0.5)] border transition-all active:scale-95 ${
+          className={`absolute right-4 lg:right-36 bottom-10 z-[60] px-8 py-3 font-bold uppercase tracking-widest rounded shadow-[0_0_15px_rgba(220,38,38,0.5)] border transition-all active:scale-95 ${
             isPlayerTurn
               ? "bg-red-900 hover:bg-red-700 text-red-100 border-red-500"
               : "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
