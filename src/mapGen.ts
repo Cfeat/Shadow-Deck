@@ -48,10 +48,8 @@ export function generateTower(): TowerNode[][] {
     const isFirst = f === 1;
 
     if (isFirst) {
-      // Floor 1: single battle node
-      const node = makeNode("BATTLE", f, 0.5);
-      node.reached = true;
-      floors.push([node]);
+      // Floor 1: single battle node (entered by clicking, like any other node)
+      floors.push([makeNode("BATTLE", f, 0.5)]);
     } else if (isFinal) {
       // Final boss: single node
       floors.push([makeNode("BOSS", f, 0.5)]);
@@ -180,11 +178,14 @@ export function getAccessibleNodes(
   currentNodeId: string,
 ): TowerNode[] {
   if (currentFloor >= TOTAL_FLOORS) return [];
+  // Run start: no node entered yet -> the first floor is the entry point.
+  if (!currentNodeId) return floors[0] ?? [];
   const currentFloorNodes = floors[currentFloor - 1];
+  const nextFloorNodes = floors[currentFloor];
+  if (!currentFloorNodes || !nextFloorNodes) return [];
   const currentNode = currentFloorNodes.find((n) => n.id === currentNodeId);
   if (!currentNode) return [];
 
-  const nextFloorNodes = floors[currentFloor];
   return nextFloorNodes.filter((n) => currentNode.connections.includes(n.id));
 }
 

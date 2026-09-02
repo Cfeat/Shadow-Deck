@@ -82,10 +82,6 @@ const TowerMap: React.FC<TowerMapProps> = ({
 
   const accessibleIds = useMemo(() => {
     const ids = new Set<string>();
-    if (currentNode && !currentNode.completed) {
-      ids.add(currentNode.id);
-      return ids;
-    }
     getAccessibleNodes(floors, currentFloor, currentNodeId).forEach((node) => ids.add(node.id));
     return ids;
   }, [currentFloor, currentNode, currentNodeId, floors]);
@@ -101,12 +97,31 @@ const TowerMap: React.FC<TowerMapProps> = ({
 
   useEffect(() => {
     const container = scrollRef.current;
-    if (!container || !currentNode) return;
-    const frameId = requestAnimationFrame(() => {
-      const targetTop = getNodeY(currentNode, totalFloors) + 48 - container.clientHeight * 0.62;
-      container.scrollTop = Math.max(0, targetTop);
-    });
-    return () => cancelAnimationFrame(frameId);
+    if (!container) return;
+    const targetTop = () =>
+      currentNode
+        ? getNodeY(currentNode, totalFloors) + 48 - container.clientHeight * 0.62
+        : container.scrollHeight;
+    const apply = () => {
+      const next = Math.max(0, targetTop());
+      if (container.scrollTop !== next) container.scrollTop = next;
+    };
+    apply();
+    // The flex height chain can resolve *after* this effect first runs: the
+    // container starts out content-sized (no overflow, scrollTop clamps back
+    // to 0) and only later gets its viewport-bounded height. Poll until the
+    // scroll actually takes. Use timers, not rAF/ResizeObserver — both are
+    // delivered only when the page paints a frame, and this pane has been
+    // observed to mount without ever painting.
+    if (container.scrollTop === Math.max(0, targetTop())) return;
+    const deadline = performance.now() + 1500;
+    const pollId = window.setInterval(() => {
+      apply();
+      if (container.scrollTop === Math.max(0, targetTop()) || performance.now() > deadline) {
+        window.clearInterval(pollId);
+      }
+    }, 100);
+    return () => window.clearInterval(pollId);
   }, [currentNode, totalFloors]);
 
   return (

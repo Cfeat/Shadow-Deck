@@ -234,7 +234,9 @@ const App: React.FC = () => {
     // Generate tower map
     const tower = generateTower();
     setTowerFloors(tower);
-    setCurrentNodeId(tower[0][0].id);
+    // Start *before* floor 1: no current node yet, so the floor 1 battle
+    // is the first thing the player clicks and fights (not pre-walked).
+    setCurrentNodeId("");
     setFloor(1);
     setPhase("MAP");
     setMessages([]);
@@ -279,7 +281,7 @@ const App: React.FC = () => {
     setRuptureActive(state.ruptureActive || false);
     setNextAttackDouble(state.nextAttackDouble || false);
     if (state.towerFloors) setTowerFloors(state.towerFloors);
-    if (state.currentNodeId) setCurrentNodeId(state.currentNodeId);
+    setCurrentNodeId(state.currentNodeId || "");
     setMessages([]);
     setFloatingTexts([]);
 
@@ -379,6 +381,11 @@ const App: React.FC = () => {
         handleTreasure(node.id);
         break;
     }
+
+    // Treasure resolves in place: the phase never leaves "MAP", so the
+    // [phase] unlock effect below never re-fires. Release the lock here
+    // or every later map click is silently swallowed.
+    if (node.type === "TREASURE") nodeSelectionLockedRef.current = false;
   };
 
   const handleTreasure = (nodeId: string) => {
@@ -1508,9 +1515,9 @@ const App: React.FC = () => {
           relicsCount={relics.length}
         />
         {/* Bottom bar */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs text-slate-500 z-10">
+        <div className="pointer-events-none absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs text-slate-500 z-10">
           <span>{username ? `👤 ${username}` : t("map.notSignedIn")}</span>
-          <div className="flex gap-3">
+          <div className="pointer-events-auto flex gap-3">
             {username && (
               <button onClick={() => doSave(0)} className="hover:text-blue-400 transition-colors flex items-center gap-1">
                 <Save size={12} /> {t("menu.quickSave")}
