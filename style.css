@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap');
 
+/* Tailwind is compiled at build time (tailwind.config.js / postcss.config.js).
+   Previously this page loaded the Play CDN (cdn.tailwindcss.com) and generated
+   all utility CSS in the browser at runtime — that regenerated styles on every
+   DOM mutation, which read as sluggish, unreliable clicks once the map grew. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: #020617;
@@ -144,6 +152,16 @@ body {
 
 button:active:not(:disabled) {
     transform: scale(0.95);
+}
+
+/* Map nodes are centered with `transform: translate(-50%, -50%)`. The global
+   :active rule above (specificity 0-2-1) beats Tailwind's -translate-*
+   utilities and would drop that translation the instant the button is
+   pressed — the node jumps ~28px down-right out from under the pointer and
+   the click never lands. Re-state the translation so pressing keeps the
+   node centered under the cursor. Specificity 0-3-1: beats both. */
+.map-node:active:not(:disabled) {
+    transform: translate(-50%, -50%) scale(0.95);
 }
 button:disabled {
     cursor: not-allowed;
